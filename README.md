@@ -60,7 +60,7 @@ against the `arch` package. All models are backtested out of sample over 1,511 t
 ## Methods
 
 Losses are positive: $L_t = -r_t$. VaR and ES are reported as positive fractions of notional.
-Parametric models assume a zero mean. $\alpha \in \{0.99, 0.975\}$.
+Parametric models assume a zero mean. $\alpha \in \lbrace 0.99, 0.975 \rbrace$.
 
 | Method | Return distribution | Volatility |
 |---|---|---|
@@ -73,7 +73,7 @@ Parametric models assume a zero mean. $\alpha \in \{0.99, 0.975\}$.
 
 **Definitions.**
 
-$$\mathrm{VaR}_\alpha = \inf\{\ell : P(L \le \ell) \ge \alpha\}, \qquad
+$$\mathrm{VaR}_\alpha = \inf \lbrace \ell : P(L \le \ell) \ge \alpha \rbrace, \qquad
 \mathrm{ES}_\alpha = \mathbb{E}\left[L \mid L \ge \mathrm{VaR}_\alpha\right]$$
 
 **Historical.** With losses sorted in descending order, $L_{(1)} \ge L_{(2)} \ge \dots$, and
@@ -88,7 +88,7 @@ $$\mathrm{VaR} = \sigma z_\alpha, \qquad \mathrm{ES} = \sigma \frac{\varphi(z_\a
 
 **Student t**, with scale $s$ (not the standard deviation), $\nu > 1$ and $q = t_\nu^{-1}(\alpha)$:
 
-$$\mathrm{VaR} = s\,q, \qquad \mathrm{ES} = s\,\frac{f_\nu(q)}{1-\alpha}\,\frac{\nu + q^2}{\nu - 1}$$
+$$\mathrm{VaR} = s\thinspace q, \qquad \mathrm{ES} = s\thinspace \frac{f_\nu(q)}{1-\alpha}\thinspace \frac{\nu + q^2}{\nu - 1}$$
 
 **EWMA:** $\sigma^2_{t+1} = \lambda \sigma^2_t + (1-\lambda) r_t^2$, with $\lambda = 0.94$. The
 recursion starts from the sample variance of the first 30 returns in the window.
@@ -106,8 +106,8 @@ On the full sample: $\alpha_1 = 0.047$, $\beta_1 = 0.944$, persistence 0.991, sh
 **FHS.** Standardise each return by its GARCH volatility, take the historical VaR and ES of the
 residuals, and scale them by the next-day volatility forecast:
 
-$$z_t = \frac{r_t}{\sigma_t}, \qquad \mathrm{VaR} = \sigma_{T+1}\,\mathrm{VaR}^{\text{hist}}_\alpha(z), \qquad
-\mathrm{ES} = \sigma_{T+1}\,\mathrm{ES}^{\text{hist}}_\alpha(z)$$
+$$z_t = \frac{r_t}{\sigma_t}, \qquad \mathrm{VaR} = \sigma_{T+1}\thinspace \mathrm{VaR}^{\text{hist}}_\alpha(z), \qquad
+\mathrm{ES} = \sigma_{T+1}\thinspace \mathrm{ES}^{\text{hist}}_\alpha(z)$$
 
 ## Backtesting setup
 
@@ -118,7 +118,7 @@ $$z_t = \frac{r_t}{\sigma_t}, \qquad \mathrm{VaR} = \sigma_{T+1}\,\mathrm{VaR}^{
   - Historical, normal, Student t and EWMA use the last 500 returns.
   - GARCH and FHS use an expanding window. Parameters are re-estimated every 20 trading days;
     in between, $\sigma_t$ is updated daily with the latest parameters.
-- **Tests**, with exceptions defined as $I_t = \mathbf{1}\{L_t > \mathrm{VaR}_t\}$:
+- **Tests**, with exceptions defined as $I_t = \mathbf{1}_{\lbrace L_t > \mathrm{VaR}_t \rbrace}$:
   - **Kupiec POF:** likelihood ratio test that the exception rate equals $1-\alpha$
     (χ²(1)). Zero counts are handled with $0 \ln 0 = 0$.
   - **Christoffersen:** independence test on the first-order Markov transition counts
@@ -224,7 +224,7 @@ p-values are reported: the tests have almost no power with 1-2.5 expected except
 - **Date alignment:**
   - Changing returns from day $t$ onwards leaves every forecast up to day $t$ unchanged, for
     all six methods.
-  - Changing only the return of day $t-1$ moves the day-$t$ EWMA, GARCH and FHS forecasts, so
+  - Changing only the return of day $t-1$ moves the EWMA, GARCH and FHS forecasts for day $t$, so
     the most recent observation is used.
 - **Other checks:**
   - Returns match the `ret` column of the source DuckDB view on gap-free dates.
