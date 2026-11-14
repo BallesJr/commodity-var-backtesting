@@ -19,6 +19,7 @@ from typing import NamedTuple
 
 import numpy as np
 from scipy.optimize import minimize
+from scipy.stats import chi2
 
 # Backcast settings, identical to arch (GARCH.backcast in arch/univariate/volatility.py)
 BACKCAST_DECAY = 0.94
@@ -140,3 +141,30 @@ def forecast_sigma(params, eps, backcast: float) -> float:
     eps = np.asarray(eps, dtype=float)
     sigma2 = garch_variance(params, eps, backcast)
     return float(np.sqrt(omega + alpha * eps[-1] ** 2 + beta * sigma2[-1]))
+
+
+def ljung_box(x, lags: int = 10) -> tuple[float, float]:
+    """Ljung-Box test for autocorrelation up to ``lags``. Returns (Q, p_value).
+
+        Q = n * (n + 2) * sum_{k=1..lags} rho_k^2 / (n - k)
+
+    where rho_k is the sample autocorrelation at lag k. Under the null of no
+    autocorrelation, Q is asymptotically chi-squared with ``lags`` degrees of freedom.
+
+    Note: when x comes from the residuals of a fitted GARCH (e.g. squared
+    standardised residuals), the exact degrees of freedom would be somewhat lower
+    because parameters were estimated. We use ``lags`` for simplicity, which makes
+    the p-value slightly too large (the test slightly too lenient).
+    """
+    x = np.asarray(x, dtype=float).ravel()
+    n = x.size
+    if not 0 < lags < n:
+        raise ValueError(f"lags must be between 1 and n-1, got {lags} with n={n}")
+    d = x - x.mean()
+    denom = np.sum(d**2)
+    q = 0.0
+    for k in range(1, lags + 1):
+        rho_k = np.sum(d[k:] * d[:-k]) / denom
+        q += rho_k**2 / (n - k)
+    q *= n * (n + 2)
+    return float(q), float(chi2.sf(q, lags))

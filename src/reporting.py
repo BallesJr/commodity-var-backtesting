@@ -5,6 +5,7 @@ import pandas as pd
 from src.config import CONFIDENCE_LEVELS, NOTIONAL
 from src.models import (
     ewma_var_es,
+    fhs_var_es,
     garch_var_es,
     historical_var_es,
     normal_var_es,
@@ -18,6 +19,7 @@ METHODS = {
     "student_t": lambda r, a: student_t_var_es(r, a)[:2],  # drop nu
     "ewma": ewma_var_es,
     "garch": garch_var_es,
+    "fhs": fhs_var_es,
 }
 
 

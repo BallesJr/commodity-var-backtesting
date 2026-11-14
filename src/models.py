@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 from scipy import stats
 
-from src.garch import fit_garch, forecast_sigma
+from src.garch import fit_garch, forecast_sigma, garch_variance
 
 EWMA_LAMBDA = 0.94  # RiskMetrics daily decay factor
 EWMA_INIT_OBS = 30  # observations used to seed the EWMA variance
@@ -141,3 +141,28 @@ def garch_var_es(returns, alpha: float) -> tuple[float, float]:
         warnings.warn("GARCH optimiser did not converge on this window", RuntimeWarning)
     sigma = forecast_sigma(fit.params, eps, fit.backcast) / 100
     return _normal_var_es(sigma, alpha)
+
+
+# --- 6. Filtered historical simulation (GARCH + empirical residuals) -------------
+def fhs_var_es(returns, alpha: float) -> tuple[float, float]:
+    """Filtered historical simulation VaR and ES.
+
+    A GARCH(1,1) is fitted to all the returns received. Each return is divided by
+    its own conditional volatility to get standardised residuals z_t = r_t / sigma_t,
+    whose empirical tail (same k convention as ``historical_var_es``) replaces the
+    normal quantile. The tail of z is then scaled by the next-day volatility forecast:
+
+        VaR = sigma_{T+1} * VaR(z),   ES = sigma_{T+1} * ES(z)
+
+    As in ``garch_var_es``, the GARCH works in percent and the result is converted
+    back to return fractions. z is unit-free, so only sigma_{T+1} needs rescaling.
+    """
+    r = _as_returns(returns, alpha, min_obs=10)
+    eps = 100 * r
+    fit = fit_garch(eps)
+    if not fit.converged:
+        warnings.warn("GARCH optimiser did not converge on this window", RuntimeWarning)
+    z = eps / np.sqrt(garch_variance(fit.params, eps, fit.backcast))
+    var_z, es_z = historical_var_es(z, alpha)
+    sigma_next = forecast_sigma(fit.params, eps, fit.backcast) / 100
+    return float(sigma_next * var_z), float(sigma_next * es_z)
