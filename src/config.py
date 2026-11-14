@@ -41,3 +41,13 @@ BACKTEST_MIN_HISTORY = 1000  # returns available before the first forecast
 GARCH_REFIT_EVERY = 20  # trading days between GARCH re-estimations
 FORECASTS_CSV = RESULTS_DIR / "backtest_forecasts.csv"
 SUMMARY_CSV = RESULTS_DIR / "backtest_summary.csv"
+
+# --- Sub-period comparison ---------------------------------------------------
+# Inclusive (start, end) dates, all inside the backtest sample
+PERIODS = {
+    "covid_2020": ("2020-02-20", "2020-06-30"),
+    "energy_2022": ("2022-02-24", "2022-12-30"),
+    "calm_2021": ("2021-01-01", "2021-12-31"),
+    "calm_2023": ("2023-01-01", "2023-12-31"),
+}
+CRISIS_CSV = RESULTS_DIR / "crisis_summary.csv"
