@@ -46,12 +46,15 @@ def main() -> None:
     )
     print(lb.to_string(formatters={"Q": "{:.3f}".format, "p_value": "{:.6f}".format}))
 
-    zs = pd.Series(z)
-    print("\nStandardised residuals z_t = r_t / sigma_t")
-    print(f"  mean:            {zs.mean(): .4f}")
-    print(f"  std (ddof=1):    {zs.std(): .4f}")
-    print(f"  skewness:        {zs.skew(): .4f}")
-    print(f"  excess kurtosis: {zs.kurt(): .4f}")
+    print("\nReturns r_t (in %) vs standardised residuals z_t = r_t / sigma_t")
+    moments = pd.DataFrame(
+        {
+            label: {"mean": s.mean(), "std (ddof=1)": s.std(), "skewness": s.skew(),
+                    "excess kurtosis": s.kurt()}
+            for label, s in [("r (%)", pd.Series(eps)), ("z", pd.Series(z))]
+        }
+    )
+    print(moments.to_string(float_format=lambda x: f"{x: .4f}"))
 
     print("\nNext-day VaR and ES: FHS vs normal GARCH")
     print(format_var_es_table(var_es_table(r, methods=["fhs", "garch"])))
