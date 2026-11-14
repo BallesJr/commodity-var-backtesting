@@ -8,9 +8,12 @@ Conventions shared by every function:
 """
 
 import math
+import warnings
 
 import numpy as np
 from scipy import stats
+
+from src.garch import fit_garch, forecast_sigma
 
 EWMA_LAMBDA = 0.94  # RiskMetrics daily decay factor
 EWMA_INIT_OBS = 30  # observations used to seed the EWMA variance
@@ -121,3 +124,20 @@ def ewma_var_es(returns, alpha: float, lam: float = EWMA_LAMBDA) -> tuple[float,
     """Normal VaR and ES using the EWMA next-day volatility forecast."""
     r = _as_returns(returns, alpha, min_obs=EWMA_INIT_OBS + 1)
     return _normal_var_es(ewma_sigma(r, lam), alpha)
+
+
+# --- 5. GARCH(1,1) --------------------------------------------------------------
+def garch_var_es(returns, alpha: float) -> tuple[float, float]:
+    """Normal VaR and ES using the one-day-ahead GARCH(1,1) volatility forecast.
+
+    The GARCH is fitted on returns in percent (x100) for numerical stability, so the
+    forecast sigma is divided by 100 to bring VaR and ES back to return fractions,
+    like every other model in this module.
+    """
+    r = _as_returns(returns, alpha, min_obs=10)
+    eps = 100 * r
+    fit = fit_garch(eps)
+    if not fit.converged:
+        warnings.warn("GARCH optimiser did not converge on this window", RuntimeWarning)
+    sigma = forecast_sigma(fit.params, eps, fit.backcast) / 100
+    return _normal_var_es(sigma, alpha)
