@@ -33,3 +33,4 @@ NOTIONAL = 10_000_000  # USD
 
 # --- Risk parameters ---------------------------------------------------------
 CONFIDENCE_LEVELS = (0.99, 0.975)
+WINDOW = 500  # trading days in the estimation window
