@@ -12,7 +12,7 @@ against the `arch` package. All models are backtested out of sample over 1,511 t
 - **FHS is the most balanced model at 99%.** It never reaches the red zone, passes conditional
   coverage (p = 0.074) and spreads its exceptions across years (9, 2, 5, 2, 2, 4 from 2020 to
   2025). Historical simulation has fewer exceptions in total (20), but partly by compensation:
-  it misses in crises and has none in calm years (see the ghost effect below).
+  it misses in crises and has none in 2021 and 2023 (see the ghost effect below).
 - **No model wins on every test.** At 99%, exceptions against 15.1 expected:
   historical 20, Student t 23, FHS 24, EWMA 26, normal 27, GARCH 30.
   Only historical and Student t pass Kupiec at 5%. At 97.5% the picture flips: the
