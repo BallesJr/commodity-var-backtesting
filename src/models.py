@@ -31,7 +31,7 @@ def _as_returns(returns, alpha: float, min_obs: int = 2) -> np.ndarray:
     return r
 
 
-def _normal_var_es(sigma: float, alpha: float) -> tuple[float, float]:
+def normal_var_es_from_sigma(sigma: float, alpha: float) -> tuple[float, float]:
     """VaR and ES of a zero-mean normal loss with standard deviation sigma."""
     z = stats.norm.ppf(alpha)
     var = sigma * z
@@ -67,7 +67,7 @@ def historical_var_es(returns, alpha: float) -> tuple[float, float]:
 def normal_var_es(returns, alpha: float) -> tuple[float, float]:
     """Normal VaR and ES with zero mean and the window's sample standard deviation."""
     r = _as_returns(returns, alpha)
-    return _normal_var_es(np.std(r, ddof=1), alpha)
+    return normal_var_es_from_sigma(np.std(r, ddof=1), alpha)
 
 
 # --- 3. Student t -------------------------------------------------------------
@@ -85,7 +85,19 @@ def student_t_var_es(returns, alpha: float) -> tuple[float, float, float]:
     returns or the losses gives the same nu and scale.
     """
     r = _as_returns(returns, alpha)
-    nu, _, scale = stats.t.fit(r, floc=0)
+    nu, scale = student_t_fit(r)
+    var, es = student_t_var_es_from_params(nu, scale, alpha)
+    return var, es, nu
+
+
+def student_t_fit(returns) -> tuple[float, float]:
+    """Maximum-likelihood (nu, scale) of a Student t with location fixed at 0."""
+    nu, _, scale = stats.t.fit(np.asarray(returns, dtype=float), floc=0)
+    return float(nu), float(scale)
+
+
+def student_t_var_es_from_params(nu: float, scale: float, alpha: float) -> tuple[float, float]:
+    """VaR and ES of a zero-location Student t loss with the given nu and scale."""
     if nu <= 1:
         raise ValueError(
             f"Fitted degrees of freedom nu={nu:.4f} <= 1: the t distribution has no "
@@ -94,7 +106,7 @@ def student_t_var_es(returns, alpha: float) -> tuple[float, float, float]:
     q = stats.t.ppf(alpha, nu)
     var = scale * q
     es = scale * stats.t.pdf(q, nu) / (1 - alpha) * (nu + q**2) / (nu - 1)
-    return float(var), float(es), float(nu)
+    return float(var), float(es)
 
 
 # --- 4. EWMA (RiskMetrics) -----------------------------------------------------
@@ -123,7 +135,7 @@ def ewma_sigma(returns, lam: float = EWMA_LAMBDA, n_init: int = EWMA_INIT_OBS) -
 def ewma_var_es(returns, alpha: float, lam: float = EWMA_LAMBDA) -> tuple[float, float]:
     """Normal VaR and ES using the EWMA next-day volatility forecast."""
     r = _as_returns(returns, alpha, min_obs=EWMA_INIT_OBS + 1)
-    return _normal_var_es(ewma_sigma(r, lam), alpha)
+    return normal_var_es_from_sigma(ewma_sigma(r, lam), alpha)
 
 
 # --- 5. GARCH(1,1) --------------------------------------------------------------
@@ -140,7 +152,7 @@ def garch_var_es(returns, alpha: float) -> tuple[float, float]:
     if not fit.converged:
         warnings.warn("GARCH optimiser did not converge on this window", RuntimeWarning)
     sigma = forecast_sigma(fit.params, eps, fit.backcast) / 100
-    return _normal_var_es(sigma, alpha)
+    return normal_var_es_from_sigma(sigma, alpha)
 
 
 # --- 6. Filtered historical simulation (GARCH + empirical residuals) -------------

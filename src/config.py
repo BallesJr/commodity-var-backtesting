@@ -34,3 +34,10 @@ NOTIONAL = 10_000_000  # USD
 # --- Risk parameters ---------------------------------------------------------
 CONFIDENCE_LEVELS = (0.99, 0.975)
 WINDOW = 500  # trading days in the estimation window
+
+# --- Backtest ----------------------------------------------------------------
+METHODS = ("historical", "normal", "student_t", "ewma", "garch", "fhs")
+BACKTEST_MIN_HISTORY = 1000  # returns available before the first forecast
+GARCH_REFIT_EVERY = 20  # trading days between GARCH re-estimations
+FORECASTS_CSV = RESULTS_DIR / "backtest_forecasts.csv"
+SUMMARY_CSV = RESULTS_DIR / "backtest_summary.csv"
