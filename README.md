@@ -292,8 +292,10 @@ python scripts/make_figures.py       # reads results/backtest_forecasts.csv
 pytest
 ```
 
-The test that compares returns with the DuckDB view is skipped when the database is not
-available.
+The DuckDB path is read from the `COMMODITY_DB` environment variable if it is set, and
+otherwise defaults to `../../Data/commodity-sql-analytics/data/commodities.duckdb` relative
+to this project. The test that compares returns with the DuckDB view is skipped when the
+database is not available.
 
 ## References
 

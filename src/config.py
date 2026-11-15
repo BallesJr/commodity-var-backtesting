@@ -1,5 +1,6 @@
 """Project-wide configuration: portfolio definition, risk parameters and file paths."""
 
+import os
 from pathlib import Path
 
 # --- Paths -------------------------------------------------------------------
@@ -8,9 +9,14 @@ DATA_DIR = PROJECT_ROOT / "data"
 RESULTS_DIR = PROJECT_ROOT / "results"
 PRICES_CSV = DATA_DIR / "prices_close.csv"
 
-# Source database from the commodity-sql-analytics project (always opened read-only)
+# Source database from the commodity-sql-analytics project (always opened read-only).
+# The COMMODITY_DB environment variable takes precedence. Otherwise the database is
+# looked up in the sibling project, assuming the layout <root>/Risk/<this project> and
+# <root>/Data/commodity-sql-analytics.
+QUANT_ROOT = PROJECT_ROOT.parents[1]
 DEFAULT_DUCKDB_PATH = Path(
-    r"C:\Users\JOAN\Desktop\Projectes\Quant\SQL\commodity-sql-analytics\data\commodities.duckdb"
+    os.environ.get("COMMODITY_DB")
+    or QUANT_ROOT / "Data" / "commodity-sql-analytics" / "data" / "commodities.duckdb"
 )
 
 # --- Portfolio ---------------------------------------------------------------
